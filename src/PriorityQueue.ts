@@ -1,17 +1,17 @@
-import { QueueNode } from './QueueNode';
+import { QueueNode } from "./QueueNode";
 
 type TComp<T> = (a: T, b: T) => number;
 
 const defaultComp = <T>(a: T, b: T) => {
-  if (typeof a === 'number' && typeof b === 'number') {
+  if (typeof a === "number" && typeof b === "number") {
     return a - b;
   } else {
     return 0;
   }
-}
+};
 
 export class PriorityQueue<V = number> {
-  private nodes: QueueNode<V>[] = [];
+  private nodes: Array<QueueNode<V>> = [];
   private size: number = 0;
   private position: {
     [internalKey: string]: number;
@@ -20,7 +20,7 @@ export class PriorityQueue<V = number> {
 
   constructor(
     private comp: TComp<V> = defaultComp,
-  ) {}
+  ) { }
 
   public peek = () => this.size > 0 ? this.nodes[0].value : undefined;
 
@@ -53,7 +53,7 @@ export class PriorityQueue<V = number> {
       const internalKey = this.getInternalKey(key, lastIdxOfInternalKey);
       const idx = this.position[internalKey];
       const removedNode = this.nodes[idx];
-      
+
       if (this.size <= 1) { // There is only one node, simply return and reset state.
         this.nodes = [];
         this.size = 0;
@@ -90,7 +90,7 @@ export class PriorityQueue<V = number> {
   }
 
   private moveDown = (idx: number) => {
-    const parentBoundaryIdx = this.size >> 1;
+    const parentBoundaryIdx = this.size >> 1; // tslint:disable-line: no-bitwise
 
     while (idx < parentBoundaryIdx) {
       const leftChildIdx = this.getLeftChildIdx(idx);
@@ -133,7 +133,7 @@ export class PriorityQueue<V = number> {
 
   private getInternalKey = (key: number | string, internalKeyIdx: number) => `${key}-${internalKeyIdx}`;
 
-  private getParentIdx = (idx: number) => (idx - 1) >> 1;
+  private getParentIdx = (idx: number) => (idx - 1) >> 1; // tslint:disable-line: no-bitwise
 
   private getLeftChildIdx = (idx: number) => idx * 2 + 1;
 

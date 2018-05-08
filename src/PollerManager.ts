@@ -1,14 +1,14 @@
-import { Observable, BehaviorSubject, timer, onErrorResumeNext, Subscription, defer } from 'rxjs';
-import { tap, filter, map, switchMap, mergeMapTo, publish, refCount, throttleTime, finalize } from 'rxjs/operators';
-import { ajax } from 'rxjs/ajax';
+import { Observable, BehaviorSubject, timer, onErrorResumeNext, defer, empty } from "rxjs";
+import { filter, map, switchMap, mergeMapTo, publish, refCount, throttleTime, finalize } from "rxjs/operators";
+import { ajax } from "rxjs/ajax";
 
-import { PriorityQueue } from './PriorityQueue';
+import { PriorityQueue } from "./PriorityQueue";
 
 class PollerManager {
   private static IdlePollerTTL = 10000; // The longest time an idle polling source can live before being deleted
-  private static GhostKey = Symbol('Ghost Poller key'); // Key of the initial dummy payload of this.intervalChanger$
+  private static GhostKey = Symbol("Ghost Poller key"); // Key of the initial dummy payload of this.intervalChanger$
   private static DefautMinInterval = Number.POSITIVE_INFINITY; // Value of the initial dummy payload of this.intervalChanger$
-  private static poolChange = new BehaviorSubject<any>({action: '__INIT__'}); // An event emitter for outside observing criticle interal changes of the manager
+  private static poolChange = new BehaviorSubject<any>({action: "__INIT__"}); // An event emitter for outside observing criticle interal changes of the manager
   private static counter = 0; // Total number of PollerManager instances
 
   private sources: {
@@ -37,8 +37,8 @@ class PollerManager {
     this.id = `pool-${PollerManager.counter}`;
 
     // In development mode, emit a PollerManager creation event.
-    process.env.NODE_ENV === 'development' && PollerManager.poolChange.next({
-      action: 'create PollerManager',
+    process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+      action: "create PollerManager",
       internals: {
         id: this.id,
         sources: {
@@ -60,13 +60,13 @@ class PollerManager {
       this.createPollingSrcIfNotExist(srcKey, url);
 
       this.updatePollingSrcTimeInterval(srcKey, interval, true);
-      this.updateSubscriptionCount(srcKey, 'inc');
+      this.updateSubscriptionCount(srcKey, "inc");
 
       return this.sources[srcKey].pipe(
         throttleTime(interval),
         finalize(() => {
           this.updatePollingSrcTimeInterval(srcKey, interval, false);
-          this.updateSubscriptionCount(srcKey, 'dec');
+          this.updateSubscriptionCount(srcKey, "dec");
 
           if (this.subCounter[srcKey] === 0) {
             this.scheduleReaper(srcKey);
@@ -76,7 +76,7 @@ class PollerManager {
     });
 
   public get peek() {
-    return PollerManager.poolChange;
+    return process.env.NODE_ENV === "development" ? PollerManager.poolChange : empty();
   }
 
   private cancelScheduledReaper = (srcKey: string) => {
@@ -86,8 +86,8 @@ class PollerManager {
       delete this.sourceReapers[srcKey];
 
       // In development mode, emit a source repeat cancellation event
-      process.env.NODE_ENV === 'development' && PollerManager.poolChange.next({
-        action: 'cancel scheduled polling source reaper',
+      process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+        action: "cancel scheduled polling source reaper",
         internals: {
           sourceReapers: {
             scheduledToRemove: srcKey,
@@ -123,8 +123,9 @@ class PollerManager {
         refCount(),
       );
 
-      PollerManager.poolChange.next({
-        action: 'create new polling source',
+      // In development mode, emit a new polling source creation event.
+      process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+        action: "create new polling source",
         context: {
           srcKey,
           url,
@@ -153,8 +154,9 @@ class PollerManager {
       if (!this.minIntervals[srcKey]) {
         this.minIntervals[srcKey] =  new PriorityQueue();
   
-        PollerManager.poolChange.next({
-          action: 'create polling source intervals entry',
+        // In development mode, emit a new polling source intervals queue creation event.
+        process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+          action: "create polling source intervals entry",
           context: {
             srcKey,
             initialInterval: interval,
@@ -187,8 +189,9 @@ class PollerManager {
         value: newPollingSrcInterval,
       });
 
-      PollerManager.poolChange.next({
-        action: 'update polling source interval',
+      // In development mode, emit polling source interval update event.
+      process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+        action: "update polling source interval",
         context: {
           srcKey,
           from: currPollingSrcInterval,
@@ -207,8 +210,8 @@ class PollerManager {
     return this.minIntervals[srcKey].peek();
   }
 
-  private updateSubscriptionCount = (srcKey: string, sign: 'inc' | 'dec') => {
-    if (sign === 'inc') {
+  private updateSubscriptionCount = (srcKey: string, sign: "inc" | "dec") => {
+    if (sign === "inc") {
       // Increase counter of polling source's subscribers
       if (!(srcKey in this.subCounter)) {
         this.subCounter[srcKey] = 0;
@@ -218,8 +221,9 @@ class PollerManager {
       this.subCounter[srcKey]--;
     }
 
-    PollerManager.poolChange.next({
-      action: 'update polling source subscription count',
+    // In development mode, emit a polling source subscription count update event.
+    process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+      action: "update polling source subscription count",
       context: {
         srcKey,
         sign,
@@ -241,8 +245,9 @@ class PollerManager {
       delete this.subCounter[srcKey];
       delete this.minIntervals[srcKey];
 
-      PollerManager.poolChange.next({
-        action: 'delete idle polling source',
+      // In development mode, emit a idle polling source deletion event.
+      process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+        action: "delete idle polling source",
         context: {
           srcKey,
         },
@@ -268,8 +273,9 @@ class PollerManager {
       });
     }, PollerManager.IdlePollerTTL) as any;
 
-    PollerManager.poolChange.next({
-      action: 'schedule deletion of idle polling source',
+    // In development mode, emit a idle polling source deletion schedule event.
+    process.env.NODE_ENV === "development" && PollerManager.poolChange.next({
+      action: "schedule deletion of idle polling source",
       context: {
         srcKey,
       },
