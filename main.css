@@ -1,0 +1,24 @@
+.pool {
+  width: 100%;
+  height: 25vh;
+  overflow: scroll;
+}
+
+.pollers {
+  height: 50vh;
+}
+
+.poller {
+  display: inline-block;
+  width: 45%;
+  height: 100%;
+  overflow: scroll;
+}
+
+.left {
+  float: left;
+}
+
+.right {
+  float: right;
+}
