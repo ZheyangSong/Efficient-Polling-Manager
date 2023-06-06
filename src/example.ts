@@ -1,5 +1,5 @@
 import 'core-js';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { pollerManager } from './PollerManager';
 
@@ -8,7 +8,7 @@ const poller1Display = document.querySelector('#poller1');
 const poller2Display = document.querySelector('#poller2');
 
 const subscriptions: Subscription[] = [];
-const peekSub: Subscription = pollerManager.peek.subscribe(
+const peekSub: Subscription = (pollerManager.peek as Observable<any>).subscribe(
   (change) => {
     if (poolInfoBoard) {
       console.info(change);

@@ -1,4 +1,4 @@
-import { Observable, BehaviorSubject, timer, onErrorResumeNext, defer, empty } from "rxjs";
+import { Observable, BehaviorSubject, timer, onErrorResumeNext, defer, EMPTY } from "rxjs";
 import { filter, map, switchMap, mergeMapTo, publish, refCount, throttleTime, finalize } from "rxjs/operators";
 import { ajax } from "rxjs/ajax";
 
@@ -76,7 +76,7 @@ class PollerManager {
     });
 
   public get peek() {
-    return process.env.NODE_ENV === "development" ? PollerManager.poolChange : empty();
+    return process.env.NODE_ENV === "development" ? PollerManager.poolChange : EMPTY;
   }
 
   private cancelScheduledReaper = (srcKey: string) => {
@@ -301,7 +301,7 @@ class PollerManager {
     });
   }
 
-  private getInsights = <T>(obj: T) => ({
+  private getInsights = <T extends object>(obj: T) => ({
     keys: Object.keys(obj),
     // values: Object.values(obj)
   })
